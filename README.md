@@ -47,3 +47,7 @@ Give a ⭐️ if you like the project!
 Copyright © 2020 [Adarsha Acharya](https://github.com/adarshaacharya).<br />
 
 This project is [MIT](https://github.com/adarshaacharya/adarsha.dev/blob/master/LICENSE) licensed.
+
+
+Basado en [adarsha.dev](https://github.com/adarshaacharya/adarsha.dev) de Adarsha Acharya.  
+Licencia MIT — se conserva el archivo LICENSE original.
