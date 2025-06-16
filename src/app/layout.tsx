@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
+
 import { Footer } from "@/components/footer";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Space_Grotesk } from "next/font/google";
@@ -10,7 +11,7 @@ import { siteMetadata } from "@/data/siteMetadata";
 import Head from "./head";
 import { ENV } from "@/lib/env";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { ChatBot } from "@/components/bot/chat-bot";
+// import { ChatBot } from "@/components/bot/chat-bot";
 import { Toaster, toast } from 'sonner';
 
 const space_grotesk = Space_Grotesk({
@@ -76,7 +77,7 @@ export default function RootLayout({
           <main className="mx-4  px-2 md:px-0 lg:mx-auto flex flex-col justify-between min-h-screen">
             <Header />
             {children}
-            <ChatBot />
+
             <Footer />
             <Toaster position="top-right" richColors />
           </main>
