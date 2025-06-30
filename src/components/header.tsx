@@ -11,6 +11,9 @@ const navItems = {
   "/": {
     name: "home",
   },
+  "#experience": {
+    name: "experience",
+  },
   "/blog": {
     name: "blog",
   },
@@ -36,30 +39,19 @@ export function Header() {
             <div className="flex w-full flex-row justify-between items-center">
               <div className="flex flex-row justify-between">
                 {Object.entries(navItems).map(([path, { name }]) => {
-                  const isActive = path === pathname;
+                  const isHashLink = path.startsWith("#");
+                  const isActive = !isHashLink && path === pathname;
                   return (
                     <Link
                       key={path}
                       href={path}
+                      scroll={isHashLink ? true : undefined} // evita cambiar de página
                       className={cn(
                         "flex align-middle transition-all hover:text-neutral-800 dark:hover:text-neutral-200",
                         !isActive && "text-neutral-500",
                       )}
                     >
-                      <span className="relative px-2 py-1">
-                        {name}
-                        {/* {path === pathname ? (
-                          <motion.div                         
-                            className="absolute inset-0 top-7 z-[-1] mx-2 h-[1px] bg-neutral-200 from-transparent to-neutral-900 dark:bg-neutral-800 dark:bg-gradient-to-r"
-                            layoutId="sidebar"
-                            transition={{
-                              type: "spring",
-                              stiffness: 350,
-                              damping: 30,
-                            }}
-                          />
-                        ) : null} */}
-                      </span>
+                      <span className="relative px-2 py-1">{name}</span>
                     </Link>
                   );
                 })}

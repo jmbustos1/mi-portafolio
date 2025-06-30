@@ -6,6 +6,9 @@ import { BlogCard } from "@/components/blog/blog-card";
 import React from "react";
 import Link from "next/link";
 import { LINKS } from "@/data/links";
+import { EXPERIENCES } from "@/app/data/experience";
+import { ExperienceCard } from "@/components/experience/experience-cards";
+
 
 export default function Home() {
   const blogs = allBlogs
@@ -72,14 +75,12 @@ export default function Home() {
 
       <div className="my-8 w-full border-t border-gray-200 dark:border-gray-800" />
 
-      <div>
-        <h2 className="mb-6 text-2xl font-bold">Latest posts</h2>
+      <div id="experience">
+        <h2 className="mb-6 text-2xl font-bold">Experience</h2>
         <ul>
-          {blogs.map((blog) => (
-            <li key={blog.slug} className="py-1">
-              <Link href={`/blog/${blog.slug}`}>
-                <BlogCard blog={blog} key={blog.slug} />
-              </Link>
+          {EXPERIENCES.map((exp, index) => (
+            <li key={index}>
+              <ExperienceCard {...exp} />
             </li>
           ))}
         </ul>

@@ -208,3 +208,7 @@ table {
 .dark .chat-scrollbar:hover {
   scrollbar-color: rgba(75, 85, 99, 0.3) transparent;
 }
+
+html {
+  scroll-behavior: smooth;
+}
