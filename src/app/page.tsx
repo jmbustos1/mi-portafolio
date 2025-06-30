@@ -26,27 +26,27 @@ export default function Home() {
           className="rounded-full cursor-pointer hover:grayscale mb-5"
           priority
         />
-        <h1 className="text-2xl font-bold">Adarsha Acharya</h1>
+        <h1 className="text-2xl font-bold">Jose Bustos</h1>
 
         <div className="text-gray-700 dark:text-gray-300">
           <p className="mt-4">
-            I’m a fullstack software engineer specializing in building web
-            applications powered by modern JavaScript technologies and AI-driven
-            features.
+            I’m a Software Engineer with a background in Electrical Engineering and strong 
+            foundations in statistics and mathematics, specializing in designing robust and 
+            resilient digital architectures and solutions.
           </p>
           <p className="mt-4 mb-4">
-            Over the years, I&apos;ve worked on multiple startups to build and
-            launch end-to-end products in insurance, iGaming, and video
-            streaming domains, and have actively contributed to various open
-            source projects.
+            Over the years, I’ve worked with multiple startups to build and launch 
+            end-to-end products in sectors like insurance, IoT, and electrical markets. 
+            My focus has been on infrastructure design, DevOps, and implementing coding 
+            best practices as core pillars in every product developed.
           </p>
 
           <p className="mb-4">
             I&apos;m currently open to new opportunities! If you have an
             exciting project or role that aligns with my expertise, please reach
             out at&nbsp;
-            <a href="mailto:hi@adarsha.dev" className="border-b inline-block">
-              hi@adarsha.dev
+            <a href="mailto:josebm78@gmail.com" className="border-b inline-block">
+              josebm78@gmail.com
             </a>
             &nbsp;or through any of my social channels below.
           </p>
