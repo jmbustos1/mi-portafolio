@@ -11,8 +11,7 @@ import { siteMetadata } from "@/data/siteMetadata";
 import Head from "./head";
 import { ENV } from "@/lib/env";
 import { GoogleAnalytics } from "@next/third-parties/google";
-// import { ChatBot } from "@/components/bot/chat-bot";
-import { Toaster, toast } from 'sonner';
+import { Toaster } from "sonner";
 
 const space_grotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -83,7 +82,9 @@ export default function RootLayout({
           </main>
           <TailwindIndicator />
         </ThemeProvider>
-        <GoogleAnalytics gaId={ENV.GOOGLE_ANALYTICS_ID} />
+        {ENV.GOOGLE_ANALYTICS_ID && (
+          <GoogleAnalytics gaId={ENV.GOOGLE_ANALYTICS_ID} />
+        )}
       </body>
     </html>
   );

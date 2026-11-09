@@ -23,17 +23,6 @@ export function Footer() {
           ))}
         </div>
       )}
-      {/* <p className="text-gray-500 dark:text-gray-400 text-sm">
-        © {new Date().getFullYear()}&nbsp;
-        <a
-          href={siteMetadata.social.x}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Adarsha Acharya.
-        </a>
-        &nbsp;All rights reserved.
-      </p> */}
 
       <a
         href={siteMetadata.repo}
@@ -43,6 +32,18 @@ export function Footer() {
       >
         View source code
       </a>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Based on{" "}
+        <a
+          href="https://github.com/adarshaacharya/adarsha.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-gray-700 dark:hover:text-gray-300"
+        >
+          adarsha.dev
+        </a>{" "}
+        by Adarsha Acharya (MIT).
+      </p>
     </footer>
   );
 }

@@ -3,31 +3,12 @@ import { withContentlayer } from "next-contentlayer2";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
-  // Ignorar errores de TypeScript durante build (SST tiene archivos internos con errores)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Excluir .sst de webpack
-  webpack: (config, { isServer }) => {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ['**/.sst/**', '**/node_modules/**'],
-    };
-    return config;
-  },
-
-  redirects: async () => {
-    return [
-      {
-        source: "/resume",
-        destination:
-          "https://docs.google.com/document/d/1jVX1D--iSqTOtFp_wR7tGbtvLeZIu9AAiQSf3bc0-fY/edit?usp=sharing",
-        permanent: true,
-      },
-    ];
-  },
+  // Nivel 0: sitio 100% estático -> S3 + CloudFront (ver deploy/).
+  output: "export",
+  // El optimizador de next/image necesita servidor.
+  images: { unoptimized: true },
+  // Rutas como carpetas (/blog/index.html): amistoso con S3/CloudFront.
+  trailingSlash: true,
 };
 
 export default withContentlayer(nextConfig);

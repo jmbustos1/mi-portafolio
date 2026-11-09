@@ -5,13 +5,6 @@ import { Mdx } from "@/components/mdx";
 import { siteMetadata } from "@/data/siteMetadata";
 import NotFound from "@/app/not-found";
 import { formatDate } from "@/lib/utils";
-import { getMDXComponent } from "next-contentlayer2/hooks";
-
-// export async function generateStaticParams() {
-//   const paths = allBlogs.map((blog) => ({ slug: blog.slug }));
-
-//   return paths;
-// }
 
 export const generateStaticParams = async () =>
   allBlogs.map((blog) => ({ slug: blog._raw.flattenedPath }));
@@ -25,7 +18,7 @@ export async function generateMetadata(props: {
     return;
   }
 
-  const ogImage = `${siteMetadata.siteUrl}/og?title=${blog.title}`;
+  const ogImage = `${siteMetadata.siteUrl}${siteMetadata.socialBanner}`;
 
   return {
     title: blog.title,
@@ -37,7 +30,7 @@ export async function generateMetadata(props: {
       locale: "en_US",
       type: "article",
       publishedTime: blog.publishedAt,
-      url: `${siteMetadata.siteUrl}/blog/${blog.slug}`,
+      url: `${siteMetadata.siteUrl}/blog/${blog.slug}/`,
       authors: siteMetadata.author,
       images: [
         {
@@ -66,8 +59,6 @@ export default async function Blog(props: {
   if (!blog) {
     return <NotFound />;
   }
-
-  const Content = getMDXComponent(blog.body.code);
 
   return (
     <section>

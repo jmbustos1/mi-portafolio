@@ -19,8 +19,7 @@
     "jsx": "preserve",
     "incremental": true,
     "types": [
-      "node",
-      "sst"
+      "node"
     ],
     "paths": {
       "@/*": [
@@ -37,7 +36,6 @@
     ]
   },
   "include": [
-    "sst.config.ts",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
@@ -48,6 +46,9 @@
     "node_modules",
     ".sst",
     ".next",
-    "**/.sst/**"
+    "out",
+    "**/.sst/**",
+    "sst.config.ts",
+    "sst-env.d.ts"
   ]
 }

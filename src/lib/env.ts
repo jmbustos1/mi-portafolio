@@ -1,8 +1,5 @@
 export const ENV = {
-  GOOGLE_ANALYTICS_ID: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID!,
-  NODE_ENV: process.env.NODE_ENV!,
-  ADSENSE_CLIENT_ID: process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID!,
-  NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL!,
-  QDRANT_API_KEY: process.env.QDRANT_API_KEY!,
-  QDRANT_URL: process.env.QDRANT_URL!,
+  // Opcional: si no está definido, Google Analytics no se carga.
+  GOOGLE_ANALYTICS_ID: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID,
+  NODE_ENV: process.env.NODE_ENV,
 };

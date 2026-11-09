@@ -2,7 +2,6 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getMDXComponent } from "next-contentlayer2/hooks";
-import { BlogComments } from "./blog/blog-comments";
 
 function CustomLink(props: { href: string; children: React.ReactNode }) {
   const { href, ...rest } = props;
@@ -50,7 +49,6 @@ export function Mdx({ code }: { code: string }) {
       <article className="prose prose-neutral dark:prose-invert prose-quoteless  max-w-none">
         <Content components={components} />
       </article>
-      <BlogComments />
     </React.Fragment>
   );
 }

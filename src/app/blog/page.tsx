@@ -1,65 +1,38 @@
-import { AnimatedBlogList } from "@/components/blog/animated-blog-list";
-import { Pagination } from "@/components/blog/pagination";
-import { SearchInput } from "../../components/blog/search-input";
+import { Suspense } from "react";
 import { allBlogs } from "contentlayer/generated";
+import { BlogExplorer } from "@/components/blog/blog-explorer";
 import { generatePageMetadata } from "../seo";
 import { ENV } from "@/lib/env";
 
 export const metadata = generatePageMetadata({
   title: "Blog",
-  description:
-    "Explore my blog posts on Javascript, Typescript, React.js, Next.js, Prisma, Nest.js, AI , LLMs and more.",
+  description: "Notes on infrastructure, DevOps, Go and local LLMs.",
 });
 
 const isProd = ENV.NODE_ENV === "production";
-const BLOG_POSTS_PER_PAGE = 6;
 
-export default async function Blog({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const resolvedSearchParams = await searchParams;
-  const pageParam = resolvedSearchParams.page;
-  const searchQuery = resolvedSearchParams.search?.toString() || "";
-  const page = typeof pageParam === "string" ? parseInt(pageParam, 10) || 1 : 1;
-
-  const blogs = allBlogs.sort((a, b) => {
-    if (new Date(a.publishedAt) > new Date(b.publishedAt)) {
-      return -1;
-    }
-    return 1;
-  });
-
-  const undraftedBlogs = isProd ? blogs.filter((blog) => !blog.draft) : blogs;
-
-  const filteredBlogs = searchQuery
-    ? undraftedBlogs.filter(
-        (blog) =>
-          blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          blog.summary.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : undraftedBlogs;
-
-  const totalPages = Math.ceil(filteredBlogs.length / BLOG_POSTS_PER_PAGE);
-  const currentPage = page > totalPages ? 1 : page;
-
-  const currentPosts = filteredBlogs.slice(
-    (currentPage - 1) * BLOG_POSTS_PER_PAGE,
-    currentPage * BLOG_POSTS_PER_PAGE,
-  );
+export default function Blog() {
+  // Solo los campos que usa la lista: nunca el cuerpo MDX completo.
+  const posts = allBlogs
+    .filter((blog) => !isProd || !blog.draft)
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+    )
+    .map(({ slug, title, summary, publishedAt, readingTime }) => ({
+      slug,
+      title,
+      summary,
+      publishedAt,
+      readingTime,
+    }));
 
   return (
     <section className="min-h-[calc(100vh-300px)]">
-      <div className="mb-8">
-        <SearchInput />
-      </div>
-
-      <AnimatedBlogList posts={currentPosts} />
-
-      {totalPages > 1 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} />
-      )}
+      {/* useSearchParams exige Suspense en un export estático. */}
+      <Suspense>
+        <BlogExplorer posts={posts} />
+      </Suspense>
     </section>
   );
 }

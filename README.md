@@ -1,53 +1,27 @@
-# adarsha.dev
+# Jose Bustos — portafolio
 
-This is my personal website and blog built using:
+Sitio personal y blog: **https://jose.aetern.dev**
 
-- Framework : [Next.js](https://nextjs.org/)
-- Styling : [Tailwind CSS](https://tailwindcss.com/)
-- Markdown : [MDX](https://mdxjs.com/) and [Contentlayer](https://contentlayer.dev/)
-- Deployment: [Vercel](https://vercel.com/)
-- AI Bot : [OpenAI](https://openai.com/), [LangChain](https://langchain.com/), [Qdrant](https://qdrant.tech/)
+- **Framework:** Next.js 15 (export estático) + Tailwind CSS
+- **Contenido:** MDX con Contentlayer (`src/content/`)
+- **Infraestructura:** S3 + CloudFront + Route 53, con Terraform (Nivel 0 de `ESTRATEGIA-ESCALADO`)
 
-## Running Locally
-
-This application requires Node.js v16.13+.
+## Correr en local
 
 ```bash
-git clone https://github.com/adarshaacharya/adarsha.dev
-cd adarsha.dev
 pnpm install
-pnpm dev
+pnpm dev            # http://localhost:3000
 ```
 
-## Generate embeddings
+## Desplegar
 
-To generate embeddings for the blog posts, run the following command:
+Ver [`deploy/README.md`](deploy/README.md). En resumen:
 
 ```bash
-pnpm run gen:embeddings
+cd deploy && ./deploy.sh <aws_profile>
 ```
 
-## Templating Project
+## Créditos
 
-If you want to use this project code as your own portfolio , you can go ahead. Please give me credit by mentioning original repo link somewhere in README.
-
-**Note**: The source for this site was not created to be a template or theme, but for my own use so it may not fit your needs. Feel free to tweak as per your need.
-
-## Author
-
-- Website: https://adarsha.dev/
-- X: [@adarsha_ach](https://x.com/adarsha_ach)
-- Github: [@adarshaacharya](https://github.com/adarshaacharya)
-- LinkedIn: [@adarshaacharya](https://linkedin.com/in/adarshaacharya)
-
-Give a ⭐️ if you like the project!
-
-## License
-
-Copyright © 2020 [Adarsha Acharya](https://github.com/adarshaacharya).<br />
-
-This project is [MIT](https://github.com/adarshaacharya/adarsha.dev/blob/master/LICENSE) licensed.
-
-
-Basado en [adarsha.dev](https://github.com/adarshaacharya/adarsha.dev) de Adarsha Acharya.  
-Licencia MIT — se conserva el archivo LICENSE original.
+Basado en [adarsha.dev](https://github.com/adarshaacharya/adarsha.dev) de Adarsha
+Acharya, bajo licencia MIT. Ver [`LICENSE`](LICENSE).
