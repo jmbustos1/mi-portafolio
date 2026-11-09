@@ -38,7 +38,7 @@ export const ProjectCard = ({ project }: Props) => {
             </p>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SocialLink
             icon={GitHubIcon}
             href={project.repo}
@@ -51,6 +51,17 @@ export const ProjectCard = ({ project }: Props) => {
               className="h-6 w-6 flex-none"
             />
           )}
+          {project.extraRepos?.map((extra) => (
+            <a
+              key={extra.href}
+              href={extra.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {extra.label}
+            </a>
+          ))}
         </div>
       </div>
     </div>

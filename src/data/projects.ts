@@ -5,9 +5,24 @@ export type WebApp = {
   tags: string[];
   demo?: string;
   thumbnail: string;
+  /** Repos adicionales de un mismo proyecto, además de `repo`. */
+  extraRepos?: { label: string; href: string }[];
 };
 
 export const WEB_APPS: WebApp[] = [
+  {
+    title: "Exwood",
+    repo: "https://github.com/jmbustos1/backend-ewood",
+    extraRepos: [
+      { label: "Mobile", href: "https://github.com/jmbustos1/ewood-mobile" },
+      { label: "Firmware", href: "https://github.com/jmbustos1/esp32ewood" },
+      { label: "Dashboard", href: "https://github.com/jmbustos1/frontend-ewood" },
+    ],
+    thumbnail: "/_static/projects/exwood.png",
+    description:
+      "Electric scooter rental platform, from device to cloud: IoT firmware, a Go backend with raw TCP and WebSockets for real-time tracking and remote lock/unlock, a mobile app with live map, trips and wallet, and a fleet dashboard.",
+    tags: ["Go", "React Native", "Next.js", "ESP32", "SIM7600", "WebSocket", "PostgreSQL", "AWS", "Terraform"],
+  },
   {
     title: "EC2 Ollama Proxy",
     repo: "https://github.com/jmbustos1/ollama-remote-gateway",
@@ -50,7 +65,7 @@ export const WEB_APPS: WebApp[] = [
   },
   {
     title: "Go EC2 Deploy",
-    repo: "https://github.com/jmbustos1/desafio-plutto",
+    repo: "https://github.com/jmbustos1/go-ec2",
     thumbnail: "/_static/projects/298e0e16-3054-49b7-8695-db510e0df2df.png",
     description:
       "Go project for deploying EC2 instances fast.",

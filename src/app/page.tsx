@@ -78,8 +78,8 @@ export default function Home() {
       <div id="experience">
         <h2 className="mb-6 text-2xl font-bold">Experience</h2>
         <ul>
-          {EXPERIENCES.map((exp, index) => (
-            <li key={index}>
+          {EXPERIENCES.map((exp) => (
+            <li key={exp.company} className="group">
               <ExperienceCard {...exp} />
             </li>
           ))}

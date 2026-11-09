@@ -1,65 +1,97 @@
 ---
-title: "Local DeepSeek for Cursor"
-summary: "Este post fue escrito en Notion y exportado."
+title: "Running DeepSeek on my gaming PC and using it from anywhere"
+summary: "How I turned a PC with an RTX 3060 into a private LLM server, reachable from my laptop through a reverse SSH tunnel and a small EC2 gateway."
 type: Blog
 publishedAt: 2025-06-16
 ---
 
+I wanted a coding model available from my laptop, without paying for an always-on
+GPU instance. I already had a gaming PC with an RTX 3060 at home, but it sits behind
+NAT with no public address.
 
-# Ollama
+The solution has three machines. The PC runs the model, a small EC2 instance provides
+the public entry point, and a reverse SSH tunnel connects the two. The PC opens the
+connection outbound, so the home router needs no open ports.
 
-## Instalar
-
-```python
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve
-ollama run deepseek-coder:6.7b --keepalive=-1m
-sudo systemctl restart ollama 
+```text
+Laptop ──HTTP :8100──► EC2 [Go proxy] ──reverse SSH tunnel──► GPU PC [Ollama :11434]
 ```
 
-## PC Gamer
+The full project, with its Terraform and Docker setup, is at
+[ollama-remote-gateway](https://github.com/jmbustos1/ollama-remote-gateway).
 
-```python
-## Terminal 1
-ssh -i ~/.ssh/ec2-ssh-cursor.pem -N -R 0.0.0.0:1234:localhost:11434 ubuntu@<IP_PUBLICA>
+## 1. Run the model on the GPU machine
 
-## Terminal 2
+Install [Ollama](https://ollama.com), start the server and load the model. The
+`--keepalive` flag keeps it in memory, so requests don't wait for it to reload.
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
 OLLAMA_HOST=0.0.0.0 ollama serve
 
-## Terminal 3
+# In a second terminal
 ollama run deepseek-coder:6.7b --keepalive=-1m
+```
 
-## TEST Terminal 4
+Confirm that it responds locally before adding the network:
+
+```bash
 curl http://localhost:11434/api/generate -d '{
   "model": "deepseek-coder:6.7b",
-  "prompt": "escribe una función en python que sume dos números"
+  "prompt": "Write a Python function that adds two numbers"
 }'
-
 ```
 
-## EC2
+## 2. Allow the tunnel on EC2
 
-```python
+By default, SSH binds remote forwards to the loopback interface, so the Go proxy
+container could not reach them. Enabling `GatewayPorts` changes that:
+
+```bash
 sudo nano /etc/ssh/sshd_config
+# Set this line:
+# GatewayPorts yes
 
-##EDITAR
-GatewayPorts yes
 sudo systemctl restart sshd
+```
 
-###TEST
+## 3. Open the tunnel from the GPU machine
+
+This forwards port `1234` on the EC2 instance to Ollama on the PC:
+
+```bash
+ssh -i ~/.ssh/my-ec2-key.pem -N -R 0.0.0.0:1234:localhost:11434 ubuntu@<EC2_PUBLIC_IP>
+```
+
+The tunnel only lives as long as this command, so reopen it after a disconnect. You
+can test it from the EC2 instance:
+
+```bash
 curl http://localhost:1234/api/generate -H "Content-Type: application/json" -d '{
   "model": "deepseek-coder:6.7b",
-  "prompt": "escribe una función en python que sume dos números"
+  "prompt": "Write a Python function that adds two numbers"
 }'
-
-##### USAR COMPOSE EN EL DEPLOY.
 ```
 
-## Thinkpad
+## 4. Send prompts from the laptop
 
-```python
+A small Go reverse proxy runs in Docker on the EC2 instance, listening on port `8100`
+and forwarding every request to the tunnel:
+
+```bash
 curl http://<EC2_PUBLIC_IP>:8100/api/generate -H "Content-Type: application/json" -d '{
   "model": "deepseek-coder:6.7b",
-  "prompt": "escribe una función en python que sume dos números"
+  "prompt": "Write a Python function that adds two numbers"
 }'
 ```
+
+## Before you copy this
+
+**Ollama has no authentication.** Anyone who can reach the port can use your GPU, so
+limit port `8100` in the security group to your own IP, or put authentication in front
+of the proxy. For the same reason, never publish your gateway's address or commit its
+SSH key.
+
+**The GPU machine has to stay on.** That is the trade-off: you pay for electricity
+instead of an always-on GPU instance, and the EC2 gateway can stay small and be stopped
+when you aren't using it.
