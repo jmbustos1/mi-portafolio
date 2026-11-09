@@ -34,7 +34,40 @@ function Callout(props: { emoji: string; children: React.ReactNode }) {
   );
 }
 
+type AnimatedFigureProps = {
+  src: string;
+  /** Imagen fija para quienes pidieron reducir el movimiento. */
+  poster: string;
+  alt: string;
+  width: number;
+  height: number;
+  caption?: string;
+};
+
+function AnimatedFigure({ src, poster, alt, width, height, caption }: AnimatedFigureProps) {
+  return (
+    <figure>
+      <picture>
+        <source srcSet={poster} media="(prefers-reduced-motion: reduce)" />
+        {/* next/image no admite <picture> con una fuente por media query. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          loading="lazy"
+          decoding="async"
+          className="w-full rounded-lg"
+        />
+      </picture>
+      {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+  );
+}
+
 const components = {
+  AnimatedFigure,
   Image: RoundedImage,
   a: CustomLink,
   Callout,

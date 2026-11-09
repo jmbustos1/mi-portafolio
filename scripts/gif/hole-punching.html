@@ -1,0 +1,146 @@
+<!doctype html>
+<!--
+  Escena de public/_static/blogs/hole-punching/p2p-handshake.gif.
+  draw(t) es una función pura del tiempo: se puede saltar a cualquier cuadro. Secuencia según
+  core/rendezvous y core/punch de remote-dev-access, simplificada (el PC también consulta STUN).
+  Movimiento según emilkowalski/skills (apple-design y choreograph).
+-->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:SG;src:url(../../public/_static/fonts/SpaceGrotesk-Regular.ttf)}
+html,body{margin:0;background:#09090b}svg{display:block}
+text{font-family:SG,sans-serif}.mono{font-family:"DejaVu Sans Mono",monospace}
+</style></head><body><svg id="s" width="960" height="540" viewBox="0 0 960 540"></svg>
+<script>
+const NS='http://www.w3.org/2000/svg',svg=document.getElementById('s');
+const C={bg:'#09090b',card:'#18181b',line:'#3f3f46',fg:'#f4f4f5',mut:'#a1a1aa',blue:'#5a9be6',green:'#34d399',amber:'#fbbf24'};
+const el=(n,a={},p=svg)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+function bez(x1,y1,x2,y2){return x=>{let l=0,h=1;for(let i=0;i<24;i++){const t=(l+h)/2,c=3*(1-t)*(1-t)*t*x1+3*(1-t)*t*t*x2+t*t*t;c<x?l=t:h=t}const t=(l+h)/2;return 3*(1-t)*(1-t)*t*y1+3*(1-t)*t*t*y2+t*t*t}}
+const easeOut=bez(.23,1,.32,1),easeMove=bez(.65,0,.35,1);
+const seg=(t,a,d,e=easeOut)=>e(clamp((t-a)/d));
+// Resorte subamortiguado (damping ~0.8), solo para el momento del enganche.
+const spring=(t,a,resp=.35,z=.8)=>{const x=t-a;if(x<=0)return 0;const w=2*Math.PI/resp,wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*x)*(Math.cos(wd*x)+z*w/wd*Math.sin(wd*x))};
+const T=17;
+
+// Fondo: rutas posibles, siempre quietas
+const PATHS={
+ direct:'M152 300 L790 300',
+ stun:'M152 300 L330 300 L300 265 L190 123',
+ off1:'M152 300 L330 300 L360 265 L440 123',
+ off2:'M440 123 L520 123',
+ off3:'M520 123 L600 265 L630 300 L790 300',
+ upnp:'M790 300 L630 300',
+};
+const faint=(d,dash)=>el('path',{d,fill:'none',stroke:C.line,'stroke-width':1.5,'stroke-dasharray':dash||''});
+faint('M152 300 L790 300','3 6');const dimLines=[faint('M300 265 L190 123','3 6'),faint('M360 265 L440 123')];
+const wsLine=el('path',{d:'M520 123 L600 265',fill:'none',stroke:C.blue,'stroke-width':1.5});
+const link=el('path',{d:'M152 300 L790 300',fill:'none',stroke:C.green,'stroke-width':3,'stroke-linecap':'round'});
+const hidden=Object.fromEntries(Object.entries({...PATHS,
+ offer:'M152 300 L330 300 L360 265 L440 123 L520 123 L600 265 L630 300 L790 300',
+ answer:'M790 300 L630 300 L600 265 L520 123 L440 123 L360 265 L330 300 L152 300',
+ stunBack:'M190 123 L300 265 L330 300 L152 300',
+ ping:'M790 300 L152 300',pong:'M152 300 L790 300'}).map(([k,d])=>[k,el('path',{d,fill:'none',stroke:'none'})]));
+
+function node(x,y,w,h,title,sub){const g=el('g');const ring=el('rect',{x:x-w/2-4,y:y-h/2-4,width:w+8,height:h+8,rx:17,fill:'none','stroke-width':2},g);
+ const r=el('rect',{x:x-w/2,y:y-h/2,width:w,height:h,rx:14,fill:C.card,stroke:C.line},g);
+ el('text',{x,y:y-3,'text-anchor':'middle','font-size':16,'font-weight':600,fill:C.fg,'letter-spacing':'-.01em'},g).textContent=title;
+ el('text',{x,y:y+17,'text-anchor':'middle','font-size':12.5,fill:C.mut},g).textContent=sub;return{ring,r}}
+const stun=node(150,95,120,56,'STUN','public server');
+const aws=node(480,95,160,56,'Signaling','AWS Lambda');
+const cg=node(330,300,132,72,'Carrier NAT','CGNAT, symmetric');
+const rt=node(630,300,132,72,'Home router','UPnP');
+
+// Celular
+const ph=el('g');const phRing=el('rect',{x:64,y:221,width:92,height:158,rx:21,fill:'none','stroke-width':2},ph);
+el('rect',{x:68,y:225,width:84,height:150,rx:17,fill:C.card,stroke:C.line},ph);
+const scr=el('g',{},ph);el('text',{x:110,y:216-2,'text-anchor':'middle','font-size':13,fill:C.mut},ph).textContent='Phone on 4G';
+const btn=el('g',{},scr);const btnR=el('rect',{x:80,y:286,width:60,height:28,rx:14,fill:C.fg},btn);
+const btnT=el('text',{x:110,y:305,'text-anchor':'middle','font-size':12,'font-weight':600,fill:C.bg},btn);btnT.textContent='Connect';
+const term=el('g',{},ph);el('rect',{x:75,y:240,width:70,height:118,rx:7,fill:'#000',stroke:'#27272a'},term);
+['$ tmux a','session 0','restored','$'].forEach((s,i)=>{const t=el('text',{x:81,y:259+i*17,'font-size':9.5,fill:i==3?C.green:'#d4d4d8',class:'mono'},term);t.textContent=s});
+const cursor=el('rect',{x:90,y:303,width:6,height:11,fill:C.green},term);
+
+// PC
+const pc=el('g');const pcRing=el('rect',{x:786,y:251,width:128,height:98,rx:15,fill:'none','stroke-width':2},pc);
+el('rect',{x:790,y:255,width:120,height:90,rx:11,fill:C.card,stroke:C.line},pc);
+el('rect',{x:835,y:345,width:30,height:12,fill:C.line},pc);el('rect',{x:818,y:357,width:64,height:4,rx:2,fill:C.line},pc);
+el('text',{x:850,y:296,'text-anchor':'middle','font-size':16,'font-weight':600,fill:C.fg},pc).textContent='Home PC';
+el('text',{x:850,y:316,'text-anchor':'middle','font-size':12.5,fill:C.mut},pc).textContent='rda-agent';
+
+function chip(x,y,color){const g=el('g',{opacity:0}),r=el('rect',{y:y-13,height:26,rx:13,fill:C.bg,'stroke-width':1.2},g),t=el('text',{x,y:y+4.5,'text-anchor':'middle','font-size':12,class:'mono'},g);
+ return{g,set(s,c=color){t.textContent=s;t.setAttribute('fill',c);r.setAttribute('stroke',c);const w=s.length*7.4+20;r.setAttribute('x',x-w/2);r.setAttribute('width',w)},x}}
+const cgChip=chip(330,362,C.mut),rtChip=chip(630,362,C.green),phChip=chip(118,402,C.mut);
+
+function packet(label,color){const g=el('g',{opacity:0}),w=label.length*8+18;el('rect',{x:-w/2,y:-12,width:w,height:24,rx:12,fill:color},g);el('text',{y:4.5,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:C.bg},g).textContent=label;return g}
+const P={stunq:packet('where am I?',C.mut),stunr:packet('your address',C.mut),offer:packet('offer',C.blue),upnp:packet('forward port',C.amber),answer:packet('answer',C.blue),ping:packet('PING',C.green),pong:packet('PONG',C.green),ping2:packet('PING',C.green),pong2:packet('PONG',C.green)};
+function fly(g,path,t,a,d){const p=clamp((t-a)/d);if(t<a||t>a+d+.12){g.setAttribute('opacity',0);return}
+ const L=hidden[path],pt=L.getPointAtLength(L.getTotalLength()*easeMove(p));g.setAttribute('transform',`translate(${pt.x} ${pt.y})`);
+ g.setAttribute('opacity',Math.min(seg(t,a,.14),1-seg(t,a+d,.12)))}
+function pulse(ring,t,a,color){const x=clamp((t-a)/.55);const on=t>=a&&x<1;ring.setAttribute('stroke',color);ring.setAttribute('stroke-opacity',on?(1-easeOut(x)):0)}
+
+// Enganche
+const glow=el('g',{opacity:0});
+const badge=el('g',{},glow);el('rect',{x:-122,y:-19,width:244,height:38,rx:19,fill:C.green},badge);
+el('text',{y:6,'text-anchor':'middle','font-size':15,'font-weight':600,fill:C.bg},badge).textContent='Direct · 2.6 s · 39 ms';
+// Texto
+el('text',{x:936,y:32,'text-anchor':'end','font-size':12,fill:'#71717a'}).textContent='Slowed down. Real time: 2.6 s';
+const step=el('text',{x:480,y:462,'text-anchor':'middle','font-size':12.5,fill:'#71717a',class:'mono'});
+const cap=el('text',{x:480,y:494,'text-anchor':'middle','font-size':21,fill:C.fg,'letter-spacing':'-.01em'});
+const CAPS=[[0,1.6,'The PC waits, already connected to the signaling service.'],
+[1.6,4,'You tap Connect. The phone asks STUN for its public address.'],
+[4,5.7,'The phone sends its candidates to the PC through signaling.'],
+[5.7,7.1,'The PC asks its router to forward a port, using UPnP.'],
+[7.1,9.4,'The PC answers and fires a PING at once. The PING arrives first.'],
+[9.4,11.5,'The phone replies. Its NAT picks a new port, but the forwarded port lets it in.'],
+[11.5,13.3,'The phone pings back. The round trip is confirmed both ways.'],
+[13.3,T,'Connected directly. QUIC, SSH and tmux run through the same hole.']];
+const root=[...svg.children].filter(e=>e.tagName!=='defs');
+window.T=T;
+window.draw=function(t){
+ // Conectar: respuesta al presionar
+ const press=t>=1.55&&t<1.7?.96:t>=1.7&&t<1.9?.96+.04*seg(t,1.7,.16):1;
+ btn.setAttribute('transform',`translate(110 300) scale(${press}) translate(-110 -300)`);
+ const on=t>=1.6;btnR.setAttribute('fill',on?C.line:C.fg);btnT.setAttribute('fill',on?C.fg:C.bg);btnT.textContent=on?'Connecting':'Connect';btnT.setAttribute('font-size',on?10:12);
+ const hook=13.3;
+ scr.setAttribute('opacity',1-seg(t,hook+.1,.25));term.setAttribute('opacity',seg(t,hook+.1,.3));
+ cursor.setAttribute('opacity',Math.floor((t-hook)/.55)%2==0?1:.15);
+ // STUN
+ fly(P.stunq,'stun',t,1.75,1);fly(P.stunr,'stunBack',t,2.9,1);
+ pulse(stun.ring,t,2.75,C.mut);
+ // Causa y efecto: el NAT abre el puerto cuando el paquete lo cruza
+ const cgOpen=2.1;cgChip.g.setAttribute('opacity',seg(t,cgOpen,.25));
+ const newPort=t>=10.15;cgChip.set(newPort?':41000 → :52310':'port :41000',newPort?C.amber:C.mut);
+ phChip.set('203.0.113.7:41000');phChip.g.setAttribute('opacity',seg(t,3.9,.25)*(1-seg(t,hook,.25)));
+ pulse(cg.ring,t,10.15,C.amber);
+ // Señalización
+ fly(P.offer,'offer',t,4.1,1.5);pulse(pcRing,t,5.6,C.blue);pulse(aws.ring,t,4.85,C.blue);
+ // UPnP
+ fly(P.upnp,'upnp',t,5.8,.9);rtChip.set('UDP :48957 open');rtChip.g.setAttribute('opacity',seg(t,6.7,.25));
+ if(t<7.1)pulse(rt.ring,t,6.7,C.amber);
+ // Respuesta y PING en paralelo; el PING le gana a la respuesta
+ fly(P.answer,'answer',t,7.2,2.05);fly(P.ping,'ping',t,7.2,1.25);
+ pulse(phRing,t,t<9.2?8.45:9.25,t<9.2?C.green:C.blue);
+ // PONG por un puerto nuevo, que el reenvío deja pasar
+ fly(P.pong,'pong',t,9.6,1.6);
+ if(t>=7.1&&t<11.4)pulse(rt.ring,t,10.72,C.green);
+ if(t>=9.6&&t<11.5)pulse(pcRing,t,11.15,C.green);
+ // Segunda vuelta
+ fly(P.ping2,'pong',t,11.55,.8);fly(P.pong2,'ping',t,12.35,.8);
+ if(t>=11.5&&t<12.9)pulse(pcRing,t,12.3,C.green);
+ if(t>=12.9)pulse(phRing,t,13.15,C.green);
+ // Se engancha: la línea crece desde ambos extremos y se encuentra al centro
+ const g=seg(t,hook,.5,easeMove),len=638;
+ link.setAttribute('stroke-dasharray',`${len*g/2} ${len*(1-g)} ${len*g/2}`);link.setAttribute('opacity',g>0?1:0);
+ const sp=spring(t,hook+.42);glow.setAttribute('opacity',seg(t,hook+.42,.2));
+ badge.setAttribute('transform',`translate(480 234) scale(${.94+.06*sp})`);
+ // Atenuar para enfocar: señalización y STUN ya no están en el camino
+ const dim=1-.68*seg(t,hook+.2,.45);
+ [stun,aws].forEach(n=>n.r.parentNode.setAttribute('opacity',dim));wsLine.setAttribute('opacity',dim);dimLines.forEach(l=>l.setAttribute('opacity',dim));
+ // Texto
+ const c=CAPS.find(([a,b])=>t>=a&&t<b)||CAPS[CAPS.length-1];const i=CAPS.indexOf(c);
+ cap.textContent=c[2];step.textContent=`${i+1} / ${CAPS.length}`;
+ const k=seg(t,c[0],.22);cap.setAttribute('opacity',k);cap.setAttribute('transform',`translate(0 ${5*(1-k)})`);
+ // Fundido en el bucle
+ svg.setAttribute('opacity',Math.min(seg(t,0,.35),1-seg(t,T-.4,.4)));
+};
+</script></body></html>

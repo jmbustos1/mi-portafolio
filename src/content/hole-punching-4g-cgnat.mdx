@@ -8,8 +8,9 @@ publishedAt: 2026-11-04
 ---
 
 I wanted a terminal on my phone that connects directly to the PCs at home, so I could pick up
-long-running sessions from anywhere. Tailscale or ngrok would have solved this in minutes, but I wanted
-to understand the problem, so I wrote it myself in Go:
+long-running sessions from anywhere. Tailscale or ngrok would have solved this in minutes, but I wanted to
+depend on third parties as little as possible. Since I use Android, and AI tools now make building your own
+APK straightforward, I wrote it myself in Go:
 [remote-dev-access](https://github.com/jmbustos1/remote-dev-access).
 
 The hard part is that neither device can simply be called. My PC sits behind a home router, and my phone
@@ -98,6 +99,17 @@ The result, from 4G to the PC at home:
 | Winning path | `stun+upnp` (IPv4 through the forwarded port) |
 | Time to connect, with signaling | 2.6 seconds |
 | Round-trip time | About 39 ms |
+
+This is the whole sequence, slowed down and slightly simplified (the PC also queries STUN, for example):
+
+<AnimatedFigure
+  src="/_static/blogs/hole-punching/p2p-handshake.gif"
+  poster="/_static/blogs/hole-punching/p2p-handshake.png"
+  width={960}
+  height={540}
+  alt="Animated diagram of a phone on 4G connecting to a home PC. The phone asks a STUN server for its public address, and the carrier's NAT opens a port. The phone sends its candidates to the PC through signaling on AWS. The PC asks its router to forward a port using UPnP, then sends an answer through signaling and a PING directly to the phone. The PING arrives first. The phone replies with a PONG; its NAT picks a new port, but the router's forwarded port lets it through. After a second round trip, a direct connection appears, and signaling is no longer in the path."
+  caption="From tapping Connect to a direct connection. Addresses and ports are examples."
+/>
 
 ## Android had its own opinion
 

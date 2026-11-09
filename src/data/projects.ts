@@ -15,7 +15,10 @@ export const WEB_APPS: WebApp[] = [
     repo: "https://github.com/jmbustos1/backend-ewood",
     extraRepos: [
       { label: "Mobile", href: "https://github.com/jmbustos1/ewood-mobile" },
-      { label: "Firmware", href: "https://github.com/jmbustos1/esp32ewood" },
+      {
+        label: "Firmware",
+        href: "https://github.com/jmbustos1/esp32ewood/tree/chore/consolidate-fixes-aug",
+      },
       { label: "Dashboard", href: "https://github.com/jmbustos1/frontend-ewood" },
     ],
     thumbnail: "/_static/projects/exwood.png",
@@ -24,51 +27,65 @@ export const WEB_APPS: WebApp[] = [
     tags: ["Go", "React Native", "Next.js", "ESP32", "SIM7600", "WebSocket", "PostgreSQL", "AWS", "Terraform"],
   },
   {
+    title: "Remote Dev Access",
+    repo: "https://github.com/jmbustos1/remote-dev-access",
+    thumbnail: "/_static/projects/p2p-handshake.png",
+    description:
+      "A phone-to-PC terminal that reaches machines behind NAT over a direct connection, using hand-written UDP hole punching with QUIC and an embedded SSH server on top. Serverless AWS signaling and tmux let sessions survive disconnects; a relay for harder networks is still planned.",
+    tags: ["Go", "QUIC", "UDP Hole Punching", "STUN", "UPnP", "SSH", "Kotlin", "Android", "AWS Lambda", "Terraform"],
+  },
+  {
     title: "EC2 Ollama Proxy",
     repo: "https://github.com/jmbustos1/ollama-remote-gateway",
     thumbnail: "/_static/projects/llama-01-scaled.png",
     description:
-      "Special Project for implementing locally a LLM on a remote machine with a dedicated GPU and generate prompts to there from a remote computer.",
-    tags: ["HCL", "Reverse SSH", "AWS", "Golang", "Ollama"],
+      "Runs an LLM on a remote GPU machine and sends it prompts from anywhere, through a reverse SSH tunnel and a small Go proxy on an EC2 gateway.",
+    tags: ["Go", "Reverse SSH", "AWS", "Terraform", "Ollama"],
   },
   {
-    title: "AWS DevOps Deploy Strategies",
+    title: "ECS Blue/Green with CodeDeploy",
     repo: "https://github.com/jmbustos1/aws-devops-study",
     thumbnail: "/_static/projects/images-aws.png",
     description:
-      "DevOps project to understand deploy strategies and AWS services.",
-    tags: ["HCL", "AWS", "DevOps","Terraform"],
+      "A blue/green deployment for ECS built with Terraform and CodeDeploy, shifting traffic between target groups behind an ALB from a GitHub Actions pipeline, plus an Elastic Beanstalk proof of concept.",
+    tags: ["Terraform", "AWS", "ECS", "CodeDeploy", "ALB", "GitHub Actions"],
   },
   {
     title: "Netflix Backblaze",
     repo: "https://github.com/jmbustos1/netflix-backblaze",
     thumbnail: "/_static/projects/govid.png",
     description:
-      "Project build in golang to understand monolitic apps, video streaming, BLOB storage and no ORM dbs.",
-    tags: ["HCL", "AWS", "Golang","Terraform", "React", "Backblaze", "Gin"],
+      "A video catalog with a Go API, Next.js and PostgreSQL. The API issues time-limited Backblaze B2 signed URLs, so the browser plays video directly from storage instead of through the server.",
+    tags: ["Go", "Gin", "Next.js", "PostgreSQL", "sqlc", "Backblaze B2", "Docker"],
   },
   {
     title: "Go Pong Game",
-    repo: "https://github.com/jmbustos1/pong_server",
+    repo: "https://github.com/jmbustos1/pong_server/tree/online-server",
+    extraRepos: [
+      {
+        label: "Client",
+        href: "https://github.com/jmbustos1/pong_client/tree/online-pvp",
+      },
+    ],
     thumbnail: "/_static/projects/pong1.png",
     description:
-      "Long term project made in golang to understand instance launch per lobby, websocket for bidirectional comunication and ticker server. Event Driven architecture.",
-    tags: ["HCL", "AWS", "Golang","Terraform", "Websocket", "Ebiten", "Event-Driven"],
+      "Two-player Pong in Go: an Ebiten client and a WebSocket server with a 60 Hz tick loop and in-memory lobbies. Online play is a work in progress.",
+    tags: ["Go", "Ebiten", "WebSocket", "Docker"],
   },
   {
     title: "Go Lambda Deploy",
     repo: "https://github.com/jmbustos1/go-lambda-deploy",
     thumbnail: "/_static/projects/lambda-go-deploy-container.png",
     description:
-      "Simple go project to deploy lambda functions fast on ECR containers and invoke them through API Gateway interface.",
-    tags: ["HCL", "AWS", "Golang","Terraform", "ECR", "API Gateway", "Event-Driven"],
+      "Packages a Go Lambda as a container image, pushes it to ECR and invokes it through API Gateway.",
+    tags: ["Go", "AWS Lambda", "ECR", "API Gateway", "Docker"],
   },
   {
     title: "Go EC2 Deploy",
     repo: "https://github.com/jmbustos1/go-ec2",
     thumbnail: "/_static/projects/298e0e16-3054-49b7-8695-db510e0df2df.png",
     description:
-      "Go project for deploying EC2 instances fast.",
-    tags: ["HCL", "AWS", "Golang","Terraform", "ECR", "EC2", "Bash"],
+      "Ships a containerized Go TCP server to an existing EC2 instance using ECR and SSM Run Command, with no inbound SSH step.",
+    tags: ["Go", "Docker", "AWS", "EC2", "ECR", "SSM", "Bash"],
   },
 ] as WebApp[];
