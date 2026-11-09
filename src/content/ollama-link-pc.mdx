@@ -1,0 +1,65 @@
+---
+title: "Local DeepSeek for Cursor"
+summary: "Este post fue escrito en Notion y exportado."
+type: Blog
+publishedAt: 2025-06-16
+---
+
+
+# Ollama
+
+## Instalar
+
+```python
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve
+ollama run deepseek-coder:6.7b --keepalive=-1m
+sudo systemctl restart ollama 
+```
+
+## PC Gamer
+
+```python
+## Terminal 1
+ssh -i ~/.ssh/ec2-ssh-cursor.pem -N -R 0.0.0.0:1234:localhost:11434 ubuntu@<IP_PUBLICA>
+
+## Terminal 2
+OLLAMA_HOST=0.0.0.0 ollama serve
+
+## Terminal 3
+ollama run deepseek-coder:6.7b --keepalive=-1m
+
+## TEST Terminal 4
+curl http://localhost:11434/api/generate -d '{
+  "model": "deepseek-coder:6.7b",
+  "prompt": "escribe una función en python que sume dos números"
+}'
+
+```
+
+## EC2
+
+```python
+sudo nano /etc/ssh/sshd_config
+
+##EDITAR
+GatewayPorts yes
+sudo systemctl restart sshd
+
+###TEST
+curl http://localhost:1234/api/generate -H "Content-Type: application/json" -d '{
+  "model": "deepseek-coder:6.7b",
+  "prompt": "escribe una función en python que sume dos números"
+}'
+
+##### USAR COMPOSE EN EL DEPLOY.
+```
+
+## Thinkpad
+
+```python
+curl http://<EC2_PUBLIC_IP>:8100/api/generate -H "Content-Type: application/json" -d '{
+  "model": "deepseek-coder:6.7b",
+  "prompt": "escribe una función en python que sume dos números"
+}'
+```

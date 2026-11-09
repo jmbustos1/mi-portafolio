@@ -45,7 +45,7 @@ export default function Home() {
           </p>
 
           <p className="mb-4">
-            I&apos;m currently open to new opportunities! If you have an
+            I&apos;m currently open to new opportunities ! If you have an
             exciting project or role that aligns with my expertise, please reach
             out at&nbsp;
             <a href="mailto:josebm78@gmail.com" className="border-b inline-block">

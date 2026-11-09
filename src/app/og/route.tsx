@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { siteMetadata } from "@/data/siteMetadata";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// Edge runtime disabled for SST/Lambda compatibility
+// export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   try {

@@ -5,6 +5,6 @@ services:
       target: builder
     command: sh -c "pnpm run content:dev & pnpm run dev"
     ports:
-      - "3000:3000"
+      - "3050:3000"
     volumes:
       - .:/app

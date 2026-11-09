@@ -1,18 +1,18 @@
 export const siteMetadata = {
-  title: "Adarsha Acharya",
-  author: "Adarsha Acharya",
+  title: "Jose Bustos",
+  author: "Jose Bustos",
   siteUrl: "https://adarsha.dev",
   socialBanner: "/_static/default-og-card.png",
   description:
-    "Adarsha Acharya - Fullstack developer passionate about creating and sharing things on internet",
+    "Jose Bustos - Software Engineer passionate about creating and sharing things on internet",
   keywords: [
-    `Adarsha Acharya, Adarsha, Acharya, adarshaacharya, Aadarsha Acharya, Aadarsha, Acharya, adarsha.dev, adarsha, acharya, aadarsha`,
+    `Jose, dev, python go, IoT, docker, DevOps`,
   ],
   social: {
-    email: "hi@adarsha.dev",
-    x: "https://x.com/adarsha_ach",
-    linkedinLink: `https://www.linkedin.com/in/adarshaacharya/`,
-    githubLink: `https://github.com/adarshaacharya`,
+    email: "josebm78@gmail.com",
+    x: "https://x.com/Bustos1995Jose",
+    linkedinLink: `https://www.linkedin.com/in/jose-bustos-moraga-2bb840117/`,
+    githubLink: `https://github.com/jmbustos1`,
   },
-  repo: `https://github.com/adarshaacharya/adarsha.dev`,
+  repo: `https://github.com/jmbustos1/mi-portafolio`,
 };

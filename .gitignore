@@ -38,5 +38,18 @@ next-env.d.ts
 .contentlayer
 
 .env
-
 .content-collections
+
+.sst
+
+.serverless
+
+.open-next
+
+# build artifacts & local infra state (nunca a git)
+*.zip
+*.tfstate
+*.tfstate.*
+*.tfvars
+**/.terraform/
+/out/

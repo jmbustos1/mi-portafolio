@@ -5,13 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatDate = (date: string, locale = "en-US") => {
-  const options: Intl.DateTimeFormatOptions = {
+export function formatDate(date: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC", // 👈 zona horaria fija
     year: "numeric",
     month: "long",
     day: "numeric",
-  };
-  const now = new Date(date).toLocaleDateString(locale, options);
-
-  return now;
-};
+  }).format(new Date(date));
+}

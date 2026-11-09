@@ -1,0 +1,25 @@
+service: nextjs-portfolio
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+
+plugins:
+  - serverless-nextjs-plugin
+
+custom:
+  nextjs:
+    buildCommand: pnpm run build
+    domain: # Opcional: tu-dominio.com
+
+functions:
+  nextjs:
+    handler: index.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+      - http:
+          path: /
+          method: ANY
