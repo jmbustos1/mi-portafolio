@@ -10,6 +10,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 APP="$(cd "$HERE/.." && pwd)"
 TFDIR="$HERE/terraform"
 PROFILE="${1:-${AWS_PROFILE:-default}}"
+export AWS_PROFILE="$PROFILE"   # también lo usa el backend remoto de Terraform
 
 BUCKET="$(terraform -chdir="$TFDIR" output -raw site_bucket)"
 DIST="$(terraform -chdir="$TFDIR" output -raw distribution_id)"
