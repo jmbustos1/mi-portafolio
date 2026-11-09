@@ -7,8 +7,11 @@ import NotFound from "@/app/not-found";
 import { formatDate } from "@/lib/utils";
 import { BlogIcon, BlogTags } from "@/components/blog/blog-icon";
 
+// En producción, los borradores no generan página: no quedan accesibles por URL.
 export const generateStaticParams = async () =>
-  allBlogs.map((blog) => ({ slug: blog._raw.flattenedPath }));
+  allBlogs
+    .filter((blog) => process.env.NODE_ENV !== "production" || !blog.draft)
+    .map((blog) => ({ slug: blog._raw.flattenedPath }));
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>;

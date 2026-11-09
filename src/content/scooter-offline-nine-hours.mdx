@@ -1,0 +1,165 @@
+---
+title: "The scooter that stayed offline for 9 hours while thinking it was connected"
+summary: "Debug logs starving a CPU core, a modem event that was only logged, a mutex held for exactly 60 seconds, and why firmware recovery can't depend on events alone."
+type: Blog
+icon: radio
+tags: ["Embedded", "ESP32", "SIM7600", "C", "Reliability"]
+publishedAt: 2026-09-10
+---
+
+I work on the firmware for [Exwood](/projects/)'s electric scooters: an ESP32 talking to a
+SIM7600 4G modem, which keeps a TCP connection to a Go backend. A scooter that can't reach the
+backend can't be tracked, and it can't be unlocked from the app. All of the fixes below are in the
+[firmware repo](https://github.com/jmbustos1/esp32ewood/tree/chore/consolidate-fixes-aug).
+
+Our scooters kept showing the same failure. A device would go offline and stay that way for 8 or
+9 hours, until something else forced it to recover. Meanwhile, its firmware logs looked healthy:
+the connection state machine still said `RUNNING`.
+
+The useful clue was in the production logs. These disconnects kept happening after exactly 60 seconds,
+and the backend has a 60-second read deadline. A round number like that usually isn't a coincidence.
+
+It turned out not to be one bug. Several problems were feeding each other, and fixing only one would have
+left the scooter failing in a different way.
+
+## Three layers that fail differently
+
+The connectivity state machine separates three kinds of failure, because each one needs a different
+recovery:
+
+| State | What is broken | Recovery |
+|---|---|---|
+| `MODULE_OFFLINE` | The modem stopped answering AT commands | Run the full modem setup again |
+| `NET_DOWN` | The data session is gone | Redo the PDP context, then reopen the socket |
+| `SOCKET_DOWN` | Only the TCP connection is gone | Reopen the socket, with backoff |
+
+Socket retries back off through 10 seconds, 30 seconds, 1 minute, 2 minutes and 5 minutes. All of
+that recovery logic worked, as long as the state machine knew something had gone wrong.
+
+## First: debug logs starving a CPU core
+
+The earliest problem had nothing to do with networking. A few months before, I had added verbose logs to
+debug the UART protocol with the battery management system (BMS), behind four `FRAME_DEBUG_*` flags. I
+wrote "turn off in prod" in the commit message, and they stayed on in production.
+
+The BMS sends bytes continuously, and one of those flags logged each byte. The math didn't work:
+
+| Measure | Rate |
+|---|---|
+| Log output generated | About 30 KB/s |
+| What UART0 can send at 115200 baud | About 14.4 KB/s |
+
+With logs arriving twice as fast as they could leave, the receive task spent its time waiting for buffer
+space and monopolized CPU 0. The idle task never ran, so the task watchdog panicked about every 5 minutes.
+The state machine, the main loop and the command processor all lived on that same core, so they starved
+too. One of those flags also accepted frames with bad checksums, which no production build should do.
+
+The fix was four flags set to 0. I also pinned the receive task to CPU 1, because every high-priority task
+had piled onto CPU 0 while CPU 1 sat almost idle. If someone turns the debug logs back on, they can't take
+the main loop down with them.
+
+## The event nobody acted on
+
+When the backend closes the socket, the modem sends an unsolicited message: `+IPCLOSE`. Our handler
+recognized it and logged a warning, and that was all it did:
+
+```c
+if (strstr((char*)temp_buffer, "+IPCLOSE:") != NULL) {
+    ESP_LOGW(TAG, "[URC] Connection closed: %.*s", 100, temp_buffer);
+    continue;
+}
+```
+
+So the firmware knew the connection had closed, printed that fact, and carried on believing it was
+connected. The fix is short:
+
+```c
+if (strstr((char*)temp_buffer, "+IPCLOSE:") != NULL) {
+    ESP_LOGW(TAG, "[URC] Connection closed: %.*s", 100, temp_buffer);
+    connectivity_notify_send_failed(false); // -> SOCKET_DOWN
+    continue;
+}
+if (strstr((char*)temp_buffer, "+CIPERROR:") != NULL) {
+    ESP_LOGE(TAG, "[URC] TCP/IP error: %.*s", 100, temp_buffer);
+    connectivity_notify_send_failed(true);  // -> NET_DOWN, a deeper recovery
+    continue;
+}
+```
+
+To validate it, I stopped the backend with `docker stop` for 22 minutes. Once the backend came back,
+the firmware reconnected in about 64 seconds, instead of 8 or 9 hours.
+
+## Why the backend closed the socket in the first place
+
+That explains why the device stayed offline, but not why the backend kept dropping it at exactly 60
+seconds. The answer was arithmetic.
+
+On each main loop cycle, the firmware drains incoming data from the modem while holding the UART
+mutex. Telemetry needs the same mutex, so nothing can be sent during the drain. The only limit on that
+loop was 100 iterations, and each query inside it could wait for the global 5-second AT timeout.
+
+A realistic worst case was about 12 slow iterations at 5 seconds each. That's 60 seconds holding the
+mutex, 60 seconds without telemetry, and a backend read deadline of 60 seconds.
+
+Two limits fixed it:
+
+- This query normally responds in under 100 ms, so it now has its own 2-second timeout. The global
+  timeout stayed the same, because commands like `AT+NETOPEN` legitimately need 5 seconds.
+- The loop now stops at 15 iterations. At 256 bytes each, that's 3,840 bytes per cycle, far more than a
+  lock or unlock command needs. Anything left waits in the modem for the next cycle.
+
+The new worst case is 15 × 2 seconds, or 30 seconds: half the backend's deadline.
+
+## A watchdog that doesn't trust events
+
+The `+IPCLOSE` fix has a weakness: it only works if the event arrives. Any future bug that blocks
+telemetry silently would bring the same outage back.
+
+So I added a small task that ignores events entirely and looks at one fact: when did a send last
+succeed? After 90 seconds without one, it forces a recovery.
+
+```c
+int64_t silence_us = now - s_last_send_ok_us;
+
+// Still inside the threshold: telemetry is flowing
+if (silence_us < HB_INITIAL_THRESHOLD_US) continue;
+
+// Already fired recently: wait before trying again
+if (s_last_trigger_us > 0 && (now - s_last_trigger_us) < HB_BACKOFF_US) continue;
+
+s_last_trigger_us = now;
+connectivity_notify_send_failed(true); // force NET_DOWN
+```
+
+The numbers are deliberate. Ninety seconds leaves room for the 60-second backend deadline and the normal
+recovery path to act first, and the 5-minute backoff stops it from hammering a modem that's already
+struggling. It also does nothing until the first successful send, so it can't interfere with a normal boot.
+
+Testing a safety net is awkward, because a working system never triggers it. In the same 22-minute
+outage it stayed quiet, which was correct: the `+IPCLOSE` handler got there first. To see it fire, I
+temporarily lowered the threshold and watched for its message on the serial console.
+
+## Cleaning up the startup path
+
+Two related changes went in at the same time, because they came from the same design problem: code that
+didn't trust the state machine.
+
+- **Blocking setup:** `main.c` and the update loop each ran their own modem setup before the state machine
+  took over. On a cold boot the modem needs 10 to 30 seconds to respond, so those commands burned about 65
+  seconds on timeouts. Letting the state machine do it took that down to about 2 seconds plus its polling.
+- **GPS after a modem reset:** the GPS engine was only started at boot. If the modem reset internally, TCP
+  came back but GPS stayed off, and the scooter reported position 0,0 until someone reset it by hand. The
+  full setup now starts GPS too, and the call is safe to repeat.
+
+## What I took from this
+
+- **Debug flags are production configuration.** "Turn off in prod" in a commit message isn't a control. A
+  check at build time would have caught this.
+
+- **Logging an event is not handling it.** The firmware had the right information and did nothing with it.
+- **Exact numbers are clues.** "Exactly 60 seconds" pointed straight at a timeout, and then at the
+  arithmetic behind it.
+- **Check timeouts against each other.** Each value here looked reasonable on its own. The bug only
+  appeared when you added them up and compared the total to the other side's deadline.
+- **Recovery shouldn't rely only on being told.** Events make recovery fast, and a check on real progress
+  covers the failures that never produce an event.

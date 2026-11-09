@@ -1,0 +1,127 @@
+---
+title: "Hole punching by hand: why 4G CGNAT beat me, and what finally worked"
+summary: "I wrote my own STUN client and hole puncher to reach my PC from my phone. The first test looked perfect, the second failed in one direction, and the fix wasn't what I expected."
+type: Blog
+icon: terminal
+tags: ["Networking", "NAT", "STUN", "UPnP", "Go", "Android"]
+publishedAt: 2026-11-04
+---
+
+I wanted a terminal on my phone that connects directly to the PCs at home, so I could pick up
+long-running sessions from anywhere. Tailscale or ngrok would have solved this in minutes, but I wanted
+to understand the problem, so I wrote it myself in Go:
+[remote-dev-access](https://github.com/jmbustos1/remote-dev-access).
+
+The hard part is that neither device can simply be called. My PC sits behind a home router, and my phone
+on 4G sits behind the carrier's NAT. This post is the log of how I got them to talk, including the parts
+where I was wrong.
+
+## The theory
+
+Hole punching relies on a small trick. Each device learns its public address from a STUN server, then both
+send packets to each other at the same time. Your outgoing packet makes your NAT expect a reply from that
+address, so the other side's packet gets through.
+
+Two properties of a NAT decide whether this works:
+
+- **Mapping:** does it use the same public port for every destination? If not, the address STUN saw is
+  useless to your peer.
+- **Filtering:** which incoming packets does it let through?
+
+## STUN said everything was fine
+
+I wrote the STUN client by hand and queried several public servers from a single socket. If they all
+report the same public address, the mapping doesn't depend on the destination:
+
+```go
+for _, m := range mapped[1:] {
+    if m != mapped[0] {
+        return NATSymmetric // a different port per destination
+    }
+}
+return NATEndpointInd // same public address everywhere: punching should work
+```
+
+The home PC, the phone on Wi-Fi and the phone on 4G all came back as destination-independent. I noted that
+hole punching should work directly, and that a relay would be a rare fallback. I also wrote down a warning
+to myself: mapping is only half of the story, and filtering would only show up in a real test.
+
+## Then it failed in one direction
+
+The real test, with the PC on home Wi-Fi and the phone on 4G, failed three times in a row. Packets from the
+PC reached the phone, but packets from the phone never reached the PC.
+
+Two more observations narrowed it down:
+
+- On 4G, my public IP changed between sessions, within the same block. That points to carrier-grade NAT
+  with a pool of addresses.
+- A later STUN test on 4G came back **symmetric**, contradicting the first result. A single good STUN
+  reading doesn't tell you how the NAT will always behave.
+
+My working explanation: when the phone writes to the PC, the carrier's NAT uses a different port from the one
+STUN saw. My home router only accepts replies from the exact address the PC wrote to, so it drops them. The
+carrier's NAT filters more loosely, which is why the opposite direction worked. I reasoned this out from the
+behavior and never captured the carrier's side directly.
+
+IPv6 would have avoided the problem, since the PC has a global address, but my carrier doesn't provide IPv6.
+
+## The fix was on the other end
+
+I can't change how the carrier's NAT behaves, but I do control my router, and it supports UPnP. If the PC asks
+the router to forward a UDP port, the router no longer drops packets from unknown addresses. It no longer
+matters which port the carrier picks.
+
+So I stopped betting on a single address. Each side now gathers every address it might be reachable at, in a
+small version of ICE:
+
+| Candidate | Where it comes from |
+|---|---|
+| `stun` | The public IPv4 address reported by STUN |
+| `upnp` | A port forwarded by the router |
+| `ipv6` | A global IPv6 address, when there is one |
+| `local` | The LAN address |
+
+Both sides fire at all of the other's candidates, and the first path that answers wins. Accepting a peer from
+an address that wasn't on its list matters here, because that's exactly what the carrier's NAT produces:
+
+```go
+case !slices.Contains(s.remote, from):
+    // The other side appears from an address that wasn't on its list:
+    // its NAT used another port/IP to reach us. ICE calls this "peer reflexive".
+    log.Info("peer arrived from an unlisted address", "from", from)
+```
+
+The result, from 4G to the PC at home:
+
+| Measure | Result |
+|---|---|
+| Winning path | `stun+upnp` (IPv4 through the forwarded port) |
+| Time to connect, with signaling | 2.6 seconds |
+| Round-trip time | About 39 ms |
+
+## Android had its own opinion
+
+During the tests, the connection sometimes died with `sendto: operation not permitted`. The logs showed the
+pattern: the app went to the background, and about 8 seconds later Android cut its network access.
+
+A long-lived socket needs a foreground service and a wake lock on Android. With both in place, locking the
+screen no longer dropped the session, and the keepalive handled the rest. I've only tested this on one phone,
+and manufacturers with aggressive battery optimization may behave differently.
+
+## What this doesn't solve
+
+It works because my home router offers UPnP. Hole punching didn't beat the carrier's NAT, and a port forward
+got around it. My work PC has no UPnP, so with a symmetric 4G NAT it will almost certainly need a relay, which
+I haven't built yet.
+
+It also isn't free of outside services. It uses public STUN servers, plus a small serverless signaling service
+on AWS to exchange candidates. The traffic itself does flow directly between the devices.
+
+## What I took from this
+
+- **A passing test may be measuring the wrong thing.** STUN told me about mapping, and the failure was about
+  mapping that changed plus filtering I hadn't tested.
+- **NAT behavior isn't a constant.** The same network gave me two different classifications.
+- **Offer several paths.** Gathering candidates and letting the fastest one win handled cases I hadn't predicted.
+- **Keep a lab log.** Writing down each result, including my wrong conclusions, is the only reason I could
+  reconstruct what actually happened.

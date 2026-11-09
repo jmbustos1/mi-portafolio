@@ -51,6 +51,12 @@
   @apply px-1 py-0.5 rounded-lg;
 }
 
+/* Typography agrega comillas invertidas al código en línea. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
 .prose pre code {
   @apply p-0 text-neutral-800 dark:text-neutral-200;
   border: initial;
@@ -113,7 +119,6 @@ table {
   display: block;
   max-width: fit-content;
   overflow-x: auto;
-  white-space: nowrap;
 }
 
 .prose .callout > p {
