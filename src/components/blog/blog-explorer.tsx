@@ -16,7 +16,8 @@ export function BlogExplorer({ posts }: { posts: Post[] }) {
     ? posts.filter(
         (post) =>
           post.title.toLowerCase().includes(query) ||
-          post.summary.toLowerCase().includes(query),
+          post.summary.toLowerCase().includes(query) ||
+          post.tags?.some((tag) => tag.toLowerCase().includes(query)),
       )
     : posts;
 

@@ -19,12 +19,14 @@ export default function Blog() {
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
-    .map(({ slug, title, summary, publishedAt, readingTime }) => ({
+    .map(({ slug, title, summary, publishedAt, readingTime, icon, tags }) => ({
       slug,
       title,
       summary,
       publishedAt,
       readingTime,
+      icon,
+      tags,
     }));
 
   return (

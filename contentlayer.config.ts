@@ -46,6 +46,15 @@ export const Blog = defineDocumentType(() => ({
     image: {
       type: "string",
     },
+    // Nombre del ícono: ver BLOG_ICONS en src/components/blog/blog-icon.tsx
+    icon: {
+      type: "string",
+    },
+    tags: {
+      type: "list",
+      of: { type: "string" },
+      default: [],
+    },
     draft: {
       type: "boolean",
       default: false,

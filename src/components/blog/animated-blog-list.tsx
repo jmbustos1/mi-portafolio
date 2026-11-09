@@ -8,7 +8,16 @@ import { BlogCard } from "./blog-card";
 
 type AnimatedBlogListProps = {
   posts: Array<
-    Pick<Blog, "readingTime" | "slug" | "title" | "summary" | "publishedAt">
+    Pick<
+      Blog,
+      | "readingTime"
+      | "slug"
+      | "title"
+      | "summary"
+      | "publishedAt"
+      | "icon"
+      | "tags"
+    >
   >;
 };
 

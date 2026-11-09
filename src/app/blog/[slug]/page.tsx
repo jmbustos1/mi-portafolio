@@ -5,6 +5,7 @@ import { Mdx } from "@/components/mdx";
 import { siteMetadata } from "@/data/siteMetadata";
 import NotFound from "@/app/not-found";
 import { formatDate } from "@/lib/utils";
+import { BlogIcon, BlogTags } from "@/components/blog/blog-icon";
 
 export const generateStaticParams = async () =>
   allBlogs.map((blog) => ({ slug: blog._raw.flattenedPath }));
@@ -62,14 +63,18 @@ export default async function Blog(props: {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold tracking-tighter">
-        <Balancer>{blog.title}</Balancer>
-      </h1>
-      <div className="mb-8 mt-2 flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400">
-        <p>
-          {formatDate(blog.publishedAt)} - {blog.readingTime.text}
-        </p>
+      <div className="flex items-start gap-4">
+        <BlogIcon name={blog.icon} />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tighter">
+            <Balancer>{blog.title}</Balancer>
+          </h1>
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+            {formatDate(blog.publishedAt)} - {blog.readingTime.text}
+          </p>
+        </div>
       </div>
+      <BlogTags tags={blog.tags} className="mb-8 mt-4" />
       <Mdx code={blog.body.code} />
     </section>
   );
